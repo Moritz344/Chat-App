@@ -21,12 +21,13 @@ name = input("Enter your name: ")
 
 # set available colors
 
-colors = [Fore.BLUE,Fore.CYAN,Fore.GREEN,Fore.LIGHTBLACK_EX,
+colors = [Fore.RED,Fore.BLUE,Fore.CYAN,Fore.GREEN,Fore.LIGHTBLACK_EX,
           Fore.LIGHTBLUE_EX,Fore.LIGHTCYAN_EX
 ]
 
 client_color = random.choice(colors)
-
+leave_color = colors[0]
+join_color = Fore.GREEN
 # server IP ADRESS
 
 
@@ -44,14 +45,11 @@ print(f"[*] Connection to {SERVER_HOST}:{SERVER_PORT}...")
 # connect to the server
 s.connect((SERVER_HOST,SERVER_PORT))
 print("[+] Connected.")
-
-
 def listen_for_messages():
     while True:
         message = s.recv(1024).decode()
         print("\n" + message)
 
-        
 
 # make a thread that listens for messages to this client & print them
 
@@ -63,19 +61,21 @@ t.daemon = True
 t.start()
 
 
+join_message = f"{join_color}{name} joined the chat :)." 
+s.send(join_message.encode())
 
 while True:
-    # input message we want to send to the server
-    
-    to_send = input()
-    leaving_message = None
 
+   # input message we want to send to the server
+    to_send = input("You: ")
+    leaving_message = None
     # a way to exit the program
     if to_send == "q":
         print("You left the chat room.")
-        leaving_message = f"{name} left the chat room :( {Fore.RESET}"
+        leaving_message = f"{leave_color}{name} left the chat room :( {Fore.RESET}"
         s.send(leaving_message.encode())
         break
+    
 
 
     # add the datetime, name & the color of the sender

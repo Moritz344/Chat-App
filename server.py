@@ -42,32 +42,51 @@ def listen_for_client(cs):
 
     while True:
         try:
+            if cs.fileno() == -1:
+                break
             # keep listening for a message from 'cs' socket
             msg = cs.recv(1024).decode()
 
+            client_sockets_copy = client_sockets.copy()
+
+            if not msg:
+                break
+
+
         except Exception as e:
             # client no longer connected
-            
             print(f"[!] Error: {e}")
             client_sockets.remove(cs)
+            cs.close()
+        except BrokenPipeError:
+            print("Verbindung zum Client beendet.")
+            client_sockets.remove(cs)
+            break
+        except Exception as e:
+            print(f"Fehler: {e}")
 
         else:
             # if we received a message, replace the <SEP> 
             # token with ": " for nice printing
-
             msg = msg.replace(seperator_token, ":")
 
         # iterate over all connected sockets
         for client_socket in client_sockets:
-            # and send the message
+            try:
+                if client_socket.fileno() == -1:
+                    continue
+                # and send the message
+                client_socket.send(msg.encode())
 
-            client_socket.send(msg.encode())
+            except BrokenPipeError:
+                print("Verbindung vom Client wurde unterbrochen.")
+                client_sockets.remove(client_socket) 
 
 
 while True:
     # we keep listening for new connections all the time
     client_socket,client_address = s.accept()
-    print(f"[+] {client_address} connected .")
+    print(f"[+] {client_address} connected.")
 
     # add the new connected client to connected sockets
     client_sockets.add(client_socket)
@@ -76,17 +95,24 @@ while True:
     t = Thread(target=listen_for_client,args=(client_socket,))
 
     # make the thread daemon so it ends whenever the main thread ends
-    t.daemon = True
+    t.daemon = False 
 
     # start the thread
     t.start()
+    
+    # wait for the thread to finish
+    #t.join()
+
 
 # close client sockets
 for cs in client_sockets:
     cs.close()
 
 # close server socket
-s.close()
+try:
+    s.close()
+except Exception as e:
+    print(e)
 
 
 
