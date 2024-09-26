@@ -10,3 +10,6 @@ cd Chat-app
 python3 server.py
 python3 client.py
 ```
+
+# Requirements
+- colorama
